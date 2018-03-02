@@ -51,7 +51,8 @@ def get_employees(org_name, url):
     try:
         web_page = urllib2.urlopen(request)
     except urllib2.HTTPError, e:
-        print( e.fp.read() )
+        # print( e.fp.read() )
+        return
 
     page_content = BeautifulSoup(web_page, 'html.parser')
     data = page_content.find_all('table', {'class': 'rnr-vrecord'})
@@ -95,30 +96,32 @@ def get_employees(org_name, url):
 
         employee_number = employee_number + 1
 
-# specify the url
-website_url = 'http://www.homeowners-associations-florida.com/florida_hoa_search_list.php'
-header = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36'
-}
+for i in range(1, 106):
+    # specify the url
+    website_url = 'http://www.homeowners-associations-florida.com/florida_hoa_search_list.php?pagesize=500&goto=' + str(i)
+    header = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36'
+    }
 
-request = urllib2.Request(website_url, headers=header)
+    request = urllib2.Request(website_url, headers=header)
 
-try:
-    web_page = urllib2.urlopen(request)
-except urllib2.HTTPError, e:
-    print(e.fp.read())
+    try:
+        web_page = urllib2.urlopen(request)
+    except urllib2.HTTPError, e:
+        # print(e.fp.read())
+        continue
 
-page_content = BeautifulSoup(web_page, 'html.parser')
-data = page_content.find_all('tr', {'class': 'rnr-row'})
+    page_content = BeautifulSoup(web_page, 'html.parser')
+    data = page_content.find_all('tr', {'class': 'rnr-row'})
 
-for item in data:
-    organization_name = item.find('td').get_text().strip()
-    width = len(organization_name)
-    org_name_max_width = org_name_max_width if org_name_max_width > width else width
-    organization_sheet.write(organization_number, 0, organization_name)
-    organization_number = organization_number + 1
-    organization_url = item.find('a')['href']
-    get_employees(organization_name, organization_url)
+    for item in data:
+        organization_name = item.find('td').get_text().strip()
+        width = len(organization_name)
+        org_name_max_width = org_name_max_width if org_name_max_width > width else width
+        organization_sheet.write(organization_number, 0, organization_name)
+        organization_number = organization_number + 1
+        organization_url = item.find('a')['href']
+        get_employees(organization_name, organization_url)
 
 organization_sheet.set_column(0, 0, org_name_max_width + 5)
 employee_sheet.set_column(0, 0, org_name_max_width + 5)
