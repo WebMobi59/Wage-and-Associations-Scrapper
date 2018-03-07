@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import xlsxwriter
-import urllib2
 from bs4 import BeautifulSoup
+import requests
 
 organization_number = 0
 employee_number = 1
@@ -42,19 +42,13 @@ def get_employees(org_name, url):
     global employee_number, employee_name_max_width, employee_type_max_width, employee_phone_max_width, employee_address_max_width, employee_city_max_width, employee_contact_max_width
     global employee_state_max_width, employee_title_max_width, employee_sheet, employee_website_max_width, employee_zip_max_width, employee_hoa_max_width
     website_url = 'http://www.homeowners-associations-florida.com/' + url
-    header = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36'
-    }
-
-    request = urllib2.Request(website_url, headers=header)
-
     try:
-        web_page = urllib2.urlopen(request)
-    except urllib2.HTTPError, e:
-        # print( e.fp.read() )
+        r = requests.get(website_url, timeout=3)
+    except: 
+        print("Timeout: " +website_url )
         return
-
-    page_content = BeautifulSoup(web_page, 'html.parser')
+    print(r.elapsed.total_seconds())
+    page_content =BeautifulSoup(r.text, 'lxml')
     data = page_content.find_all('table', {'class': 'rnr-vrecord'})
     for item in data:
         e_name = item.find('span', id = lambda x: x and x.endswith('_NAME')).get_text().strip()
@@ -96,22 +90,13 @@ def get_employees(org_name, url):
 
         employee_number = employee_number + 1
 
-for i in range(1, 106):
+for i in range(1, 500):
     # specify the url
-    website_url = 'http://www.homeowners-associations-florida.com/florida_hoa_search_list.php?pagesize=500&goto=' + str(i)
-    header = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.186 Safari/537.36'
-    }
-
-    request = urllib2.Request(website_url, headers=header)
-
-    try:
-        web_page = urllib2.urlopen(request)
-    except urllib2.HTTPError, e:
-        # print(e.fp.read())
-        continue
-
-    page_content = BeautifulSoup(web_page, 'html.parser')
+    website_url = 'http://www.homeowners-associations-florida.com/florida_hoa_search_list.php?goto=' + str(i)
+    print(website_url)
+    r = requests.get(website_url)
+    print("*****" + str(r.elapsed.total_seconds()) + "*****")
+    page_content =BeautifulSoup(r.text, 'lxml')
     data = page_content.find_all('tr', {'class': 'rnr-row'})
 
     for item in data:
